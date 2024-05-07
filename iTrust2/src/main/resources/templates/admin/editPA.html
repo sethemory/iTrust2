@@ -1,0 +1,245 @@
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:include="layout :: head(title=~{::title},links=~{})">
+<title>Manage PAs</title>
+</head>
+<body th:include="layout :: body" th:with="content=~{::content}">
+	<div th:fragment="content">
+		<script th::inline="javascript">
+
+			var app = angular.module("managePAApp", []);
+			app.controller("managePACtrl", function($scope, $http) {
+				
+				var checkValidUserForm = function(PA) {
+					var err = [];
+				
+					for(var i = 0; i < $scope.PAs.length; i++ ) {
+						if( $scope.PA.username === $scope.PAs[i].username) {
+						    err.push("Username already exists");
+						}
+					}
+	       	        if( $scope.PA.password === $scope.PA.password2) {
+					    // do nothing
+					} else {
+						err.push("Passwords do not match" );
+					}
+	 				if( $scope.PA.password.length < 6)
+	 					err.push("Password must be more than 6 characters long");
+	 				if( $scope.PA.firstName.length == 0){
+	 					err.push("A first name must be included");
+	 				}
+	 				if( $scope.PA.lastName.length == 0){
+	 					err.push("A last name must be included");
+	 				}
+	 				if( $scope.PA.address.length == 0){
+	 					err.push("An address must be included");
+	 				}
+	 				
+					return err.join(".  ");
+				}
+				
+				$scope.PAs = [];
+		        $scope.loadPAs = function () {
+		          
+		          
+		          $http.get("/iTrust2/api/v1/patientadvocate/" + sessionStorage.getItem('PAE')).then(
+		            function (response) {
+		              $scope.PA = response.data;
+		              $scope.message = "";
+		              console.log($scope.PA);
+		            }, function (rejection) {
+			          $scope.PAs = [];
+			          $scope.message = "Could not display Patient Advocates";
+			        });
+		        }
+		        
+		        $scope.editPA = function () {
+					
+					$scope.PA.role = "ROLE_PATIENT_ADVOCATE";
+		        	
+			          //var err = checkValidUserForm($scope.PA);
+			          if (0) {
+			            $scope.errorAdding = err;
+			            $scope.successMessage = "";
+			          } else {
+			            $http.put("/iTrust2/api/v1/patientadvocate/" + $scope.PA.username, $scope.PA).then(
+			              function (response) {
+			            	    $scope.loadPAs();
+			                $scope.PA.username = "";
+			                $scope.PA.password = "";
+			                $scope.PA.password2 = "";
+			                
+			                $scope.PA.firstName = "";
+			                $scope.PA.middleName = "";
+			                $scope.PA.lastName = "";
+			                $scope.PA.nickname = "";
+			                
+			                $scope.PA.address = "";
+			                $scope.PA.phone = "";
+			                $scope.PA.email = "";
+			                
+			                $scope.PA.role = "ROLE_PATIENT_ADVOCATE";
+			                $scope.errorAdding = "";
+			                $scope.successMessage = "Patient Advocate added successfully.";
+			              }, function (rejection) {
+			            	    $scope.loadPAs();
+			                $scope.errorAdding = "Could not add Patient Advocate: " + rejection.data.message;
+			                $scope.successMessage = "";
+			              });
+			          }
+		        }
+		        
+		        $scope.deletePA = function(PA) {
+		            $http.delete('/iTrust2/api/v1/patientadvocate/' + PA.username).then(
+		              function (response) {
+		                $scope.loadPAs();
+		              }, function (rejection) {
+		            	    $scope.loadPAs();
+		                $scope.message = "Could not remove patient advocate";
+		              });
+		          }
+		        
+		        $scope.patients = [];
+		        $scope.getPatients = function() {
+		        	$http.get("/iTrust2/api/v1/patients").then(
+				    	function (response) {
+				        	$scope.patients = response.data;
+				            $scope.message = "";
+				        }, function (rejection) {
+				            $scope.patients = [];
+				            $scope.message = "Could not display patients";
+				        });
+		        }
+		        
+		        $scope.getTemplate = function (PA) {
+			          return 'view';
+			        };
+			         
+			    $scope.getPatients();
+			    $scope.loadPAs();
+			});
+		
+		</script>
+		
+		<div ng-app="managePAApp" ng-controller="managePACtrl">
+			<div class="container">
+				<div class="row">
+					<div class="col-md-12">
+						<div class="panel panel-primary">
+							<div class="panel-heading">
+								<h3>Admin Manage Patient Advocates</h3>
+							</div>
+							<div class="panel-body">
+							
+								<script type="text/ng-template" id="view">
+                </script>
+								<br>
+								<style>
+form {
+	width: 400px;
+}
+
+.label {
+	float: right;
+	text-align: left;
+	width: 200px;
+	height: 20px;
+	color: #000000
+}
+
+input[type=text] {
+	float: right;
+	text-align: left;
+	width: 200px;
+	height: 20px
+}
+
+input[type=email] {
+	float: right;
+	text-align: left;
+	width: 200px;
+	height: 20px
+}
+
+input[type=password] {
+	float: right;
+	text-align: left;
+	width: 200px;
+	height: 20px
+}
+
+.clear {
+	clear: both;
+	height: 0;
+	line-height: 0;
+}
+
+.floatright {
+	float: right;
+}
+</style>
+
+
+								<div class="row">
+									<div class="col-md-12">
+										<div class="panel panel-default">
+											<div class="panel-heading ">Editing {{PA.username}}</div>
+											<div class="panel-body">
+												<form name="addPAForm"
+													ng-submit="editPA()">
+													<b>Username:</b> <input type="text" name="username"
+														id="username" ng-model="PA.username" /> <br> <br>
+													<b>Password:</b> <input type="password" name="password"
+														id="password" ng-model="PA.password" /> <br> <br>
+													<b>Password (again):</b> <input type="password"
+														name="password2" id="password2" ng-model="PA.password2" /> <br> <br> 
+													
+													<br>
+													
+													<b>First Name:</b> <input type="text"
+														name="firstName" id="firstName" ng-model="PA.firstName" /> <br> <br> 
+														
+													<b>Middle Name:</b> <input type="text"
+														name="middleName" id="middleName" ng-model="PA.middleName" /> <br> <br> 
+														
+													<b>Last Name:</b> <input type="text"
+														name="lastName" id="lastName" ng-model="PA.lastName" /> <br> <br> 
+														
+													<b>Nickname/Preferred Name:</b> <input type="text"
+														name="preferredName" id="preferredName" ng-model="PA.preferredName" /> <br> <br>
+														
+													<br>
+													
+													<b>Address:</b> <input type="text"
+														name="address1" id="address1" ng-model="PA.address1" /> <br> <br>
+														
+													<b>Phone Number:</b> <input type="text"
+														name="phone" id="phone" ng-model="PA.phone" pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}" /> <br> <br>
+														
+													<b>Email:</b> <input type="email"
+														name="email" id="email" ng-model="PA.email" /> <br> <br>
+														
+													<br> <input type="submit" id="submit" value="Edit Patient Advocate" />
+													<a href="/iTrust2/admin/managePA">
+   														<input type="button" value="Cancel" />
+													</a>
+
+												</form>
+												<div>
+													<p style="color: red" ng-model="errorAdding" id="error">{{errorAdding}}</p>
+												</div>
+												<div>
+													<p style="color: green" ng-model="successMessage"
+														id="success">{{successMessage}}</p>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+</body>
+</html>

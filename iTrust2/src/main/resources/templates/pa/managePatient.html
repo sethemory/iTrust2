@@ -1,0 +1,178 @@
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:include="layout :: head(title=~{::title},links=~{})">
+<title>Manage PAs</title>
+</head>
+<body th:include="layout :: body" th:with="content=~{::content}">
+	<div th:fragment="content">
+		<script th::inline="javascript">
+			/*<![CDATA[*/ 
+			var app = angular.module('managePatientApp', []);
+			app.controller('managePatientCtrl', function($scope, $http, $q) {
+				var noP = document.getElementById("noPatient-body");
+				var panel = document.getElementById("patient-body");
+				var officeV = document.getElementById("officeVisit");
+				var prescrip = document.getElementById("prescriptions");
+				var bill = document.getElementById("bills");
+				noP.style.display = "none";
+				officeV.style.display = "none";
+				prescrip.style.display = "none";
+				bill.style.display = "none";
+				$scope.patients = [];
+				$http.get("/iTrust2/api/v1/patientadvocate/").then(function(response) {
+					$scope.pa = response.data;
+					
+					$http.get("/iTrust2/api/v1/patientadvocate/" + $scope.pa.username + "/patients/").then(function(response) {
+						
+						
+						
+						$scope.patients = response.data;
+						
+						if ($scope.patients.length == 0) {
+							panel.style.display = "none";
+							noP.style.display = "block";
+						}
+						
+					});
+					
+					
+					
+					return;
+					
+				});
+				
+				$scope.choosePatient = function() {
+					var p = document.getElementById('patients').value;
+					$http.get("/iTrust2/api/v1/patients/" + p).then(function(response) {
+						$scope.currentPatient = response.data;
+						var perm = $scope.currentPatient.permissions;
+						/** Look for the permission corresponding to the current patient advocate. */
+						var permMatch = null;
+						var perAmount = perm.length;
+						for (var i = 0; i < perAmount; i++) {
+							
+							if ($scope.pa.username === perm[i].advocate) {
+								permMatch = perm[i];
+							}
+						}
+						if (permMatch != null) {
+							$scope.permission = permMatch;
+							
+							if ($scope.permission.officeVis == true) {
+								officeV.style.display = "block";
+							}
+							else {
+								officeV.style.display = "none";
+							}
+							
+							if ($scope.permission.billing == true) {
+								bill.style.display = "block";
+							}
+							else {
+								bill.style.display = "none";
+							}
+							
+							if ($scope.permission.prescript == true) {
+								prescrip.style.display = "block";
+							}
+							else {
+								prescrip.style.display = "none";
+							}
+							
+						}
+						
+					});
+				}
+				
+	
+			});
+			
+			/*]]>*/
+		
+		</script>
+		<br>
+		
+				<div ng-app="managePatientApp" ng-controller="managePatientCtrl">
+				<div class="container">
+					<div class="row">
+						<div class="col-md-12">
+							<div class = "panel panel-primary">
+								<div class= "panel-heading">
+									<h3>Manage your Patient(s)</h3>
+								</div>
+								<div class="patient-body" id="patient-body">
+									<label for="patient_list">Patients:</label>
+									<select name="patients" id="patients">
+										<option ng-repeat="p in patients"
+											value="{{p}}">{{p}}</option>
+									</select>
+									<button ng-click="choosePatient()" class="selectButton">Choose Patient</button>   
+								</div>
+								<div class="noPatient-body" id="noPatient-body">There are no patients available.</div>
+								
+								<div id="officeVisit" class="officeVisit">
+									<table class="table table-bordered">
+										<caption>&nbspDocumented Office Visits:</caption>
+										<thead> 
+											<tr>
+												<th></th>
+												<th>Date</th>
+												<th>Provider</th>
+												<th>Location</th>
+												<th>Survey</th>
+											</tr>
+										</thead>
+										<tbody>							<tbody>
+										<!-- Office Visit information. -->
+										</tbody>
+									</table>
+								</div>
+								<br>
+								<div id="prescriptions" class="prescriptions">
+									<table class="table table-bordered">
+										<caption>&nbspPrescriptions:</caption>
+										<thead> 
+											<tr>
+												<th>Drug</th>
+												<th>Dosage (mg)</th>
+												<th>Start Date</th>
+												<th>End Date</th>
+											</tr>
+										</thead>
+										<tbody>							<tbody>
+										<!-- Prescription information. -->
+										</tbody>
+									</table>
+								</div>
+								<br>
+								<div id="bills" class="bills">
+									<table class="table table-bordered">
+										<caption>&nbspDocumented Bills:</caption>
+										<thead> 
+											<tr>
+												<th></th>
+												<th>Bill Date</th>
+												<th>Bill Status</th>
+												<th>Bill Total</th>
+											</tr>
+										</thead>
+										<tbody>							<tbody>
+										<!-- Prescription information. -->
+										</tbody>
+									</table>
+								</div>
+								
+								
+							</div>
+						</div>
+						
+					</div>
+				</div>
+				
+				</div>
+		
+		
+	</div>
+		
+
+</body>
+</html>

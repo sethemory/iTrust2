@@ -1,0 +1,164 @@
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:include="layout :: head(title=~{::title},links=~{})">
+<title>Manage PAs</title>
+</head>
+<body th:include="layout :: body" th:with="content=~{::content}">
+	<div th:fragment="content">
+		<script th::inline="javascript">
+
+			var app = angular.module("managePAApp", []);
+			app.controller("managePACtrl", function($scope, $http) {
+				
+				var checkValidUserForm = function(PA) {
+					var err = [];
+	 				
+					return err.join(".  ");
+				}
+				
+				$scope.loadPA = function () {			          
+			          $http.get("/iTrust2/api/v1/patientadvocate/" + sessionStorage.getItem('PAE')).then(
+			            function (response) {
+			              $scope.PA = response.data;
+			              $scope.message = "";
+			            }, function (rejection) {
+				          $scope.PAs = [];
+				          $scope.message = "Could not display Patient Advocates";
+				        });
+			        }
+		        
+		        
+		        $scope.patients = [];
+		        $scope.getPatients = function() {
+		        	$http.get("/iTrust2/api/v1/patients").then(
+				    	function (response) {
+				        	$scope.patients = response.data;
+				            $scope.message = "";
+				        }, function (rejection) {
+				            $scope.patients = [];
+				            $scope.message = "Could not display patients";
+				        });
+		        }
+			        
+		        //$scope.paPatients = [];
+		        $scope.addPatient = function () {
+		        	let temp = document.getElementById("patients").value;
+		        	$http.post("/iTrust2/api/v1/patients/" + temp + "/permissions/" + $scope.PA.username).then(
+		        			function (response){
+		        			    $scope.getPatients();
+		        			    $scope.loadPA();
+		        			    alert("Patient Associated");
+		        			});
+		        	console.log($scope.PA.patients);
+		        }
+		        
+			    $scope.getPatients();
+			    $scope.loadPA();
+			});
+		
+		</script>
+		
+		<div ng-app="managePAApp" ng-controller="managePACtrl">
+			<div class="container">
+				<div class="row">
+					<div class="col-md-12">
+						<div class="panel panel-primary">
+							<div class="panel-heading">
+								<h3>Admin Manage Patient Advocates</h3>
+							</div>
+							<div class="panel-body">
+							
+								<script type="text/ng-template" id="view">
+				<td name="nameCell">{{pa.username}}</td>
+			    <td name="roleCell">{{getRole(pa)}}</td>
+                </script>
+								<br>
+								<style>
+form {
+	width: 400px;
+}
+
+.label {
+	float: right;
+	text-align: left;
+	width: 200px;
+	height: 20px;
+	color: #000000
+}
+
+input[type=text] {
+	float: right;
+	text-align: left;
+	width: 200px;
+	height: 20px
+}
+
+input[type=email] {
+	float: right;
+	text-align: left;
+	width: 200px;
+	height: 20px
+}
+
+input[type=password] {
+	float: right;
+	text-align: left;
+	width: 200px;
+	height: 20px
+}
+
+.clear {
+	clear: both;
+	height: 0;
+	line-height: 0;
+}
+
+.floatright {
+	float: right;
+}
+</style>
+
+
+								<div class="row">
+									<div class="col-md-12">
+										<div class="panel panel-default">
+											<div class="panel-heading ">Associate Patients with: {{PA.username}}</div>
+											<div class="panel-body">
+												<form name="addPAForm"
+													ng-submit="addPA(addPAForm.$valid)">
+														
+													<div class="row">
+														<div class="form-group col-md-12">
+															<div class="col-md-2 control-lable">
+																<select name="patients" id="patients">
+																	<option value="none" selected disabled hidden>Select a Patient</option>
+																	<option ng-repeat="p in patients"
+																		value="{{p.username}}">{{p.username}}</option>
+																</select>
+																<button style="margin-top: 15px;" ng-click="addPatient()" type="button">Add</button>
+																<a href="/iTrust2/admin/managePA">
+   																	<input style="margin-top: 15px" type="button" value="Finish" />
+																</a>
+															</div>
+														</div>
+													</div>
+
+												</form>
+												<div>
+													<p style="color: red" ng-model="errorAdding" id="error">{{errorAdding}}</p>
+												</div>
+												<div>
+													<p style="color: green" ng-model="successMessage"
+														id="success">{{successMessage}}</p>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+</body>
+</html>
